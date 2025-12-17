@@ -54,7 +54,7 @@ async def scrape_messages(ctx, user: discord.Member, limit: int = 1000):
     all_messages.sort(key=lambda x: x['timestamp'])
     
     # Save to file
-    filename = f"messages_{user.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    filename = f"data/messages_{user.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(all_messages, f, indent=2, ensure_ascii=False)
     

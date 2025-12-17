@@ -86,5 +86,4 @@ async def test_scrape(ctx, limit: int = 50):
     await ctx.send(f"Found {len(messages)} messages. Check console for preview.")
     print(json.dumps(messages[:5], indent=2))  # Print first 5 to console
 
-# Replace 'YOUR_BOT_TOKEN' with your actual bot token
-bot.run()
+bot.run(BOT_TOKEN)

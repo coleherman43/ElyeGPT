@@ -34,7 +34,7 @@ def should_include_message(message):
         return False
     
     # Skip bot commands
-    if content.startswith('!') or content.startswith('/'):
+    if content.startswith('!') or content.startswith('/') or content.startswith('.'):
         return False
     
     # Skip messages that are only links

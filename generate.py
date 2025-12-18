@@ -1,8 +1,9 @@
 import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
+import os
 
 def generate_text(
-    model_path='models/friend_bot/models/friend_bot',
+    model_path='models/models/elye_gpt',
     prompt='',
     max_length=100,
     temperature=0.8,
@@ -21,9 +22,13 @@ def generate_text(
         num_return_sequences: Number of different outputs to generate
     """
     
+    # Convert to absolute path to avoid huggingface repo ID confusion
+    if not os.path.isabs(model_path):
+        model_path = os.path.abspath(model_path)
+    
     print(f"Loading model from {model_path}...")
-    tokenizer = GPT2Tokenizer.from_pretrained(model_path)
-    model = GPT2LMHeadModel.from_pretrained(model_path)
+    tokenizer = GPT2Tokenizer.from_pretrained(model_path, local_files_only=True)
+    model = GPT2LMHeadModel.from_pretrained(model_path, local_files_only=True)
     
     # Move to GPU if available
     device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
@@ -59,28 +64,52 @@ def generate_text(
         )
     
     # Decode and print results
+    results = []
     for i, output in enumerate(outputs):
-        text = tokenizer.decode(output, skip_special_tokens=True)
+        full_text = tokenizer.decode(output, skip_special_tokens=True)
+        
+        # Extract only the newly generated text (remove the prompt)
+        if prompt:
+            # Remove the prompt from the beginning
+            prompt_clean = prompt.replace('<|endoftext|>', '')
+            if full_text.startswith(prompt_clean):
+                generated_text = full_text[len(prompt_clean):].strip()
+            else:
+                generated_text = full_text
+        else:
+            generated_text = full_text
+        
         if num_return_sequences > 1:
-            print(f"\n--- Generated Text #{i+1} ---")
-        print(text)
+            print(f"\n--- Response #{i+1} ---")
+        print(generated_text)
         print()
+        results.append(generated_text)
     
-    return [tokenizer.decode(output, skip_special_tokens=True) for output in outputs]
+    return results
 
 if __name__ == '__main__':
     import sys
     
     # Check if a prompt was provided as command line argument
     if len(sys.argv) > 1:
-        prompt = ' '.join(sys.argv[1:])
+        user_input = ' '.join(sys.argv[1:])
     else:
-        prompt = input("Enter a prompt (or press Enter to start fresh): ")
+        user_input = input("Enter a prompt (or press Enter to start fresh): ")
+    
+    # Format the prompt for conversational response
+    if user_input:
+        # Option 1: Few-shot - add context examples before the user's message
+        # This primes the model to respond in your friend's style
+        context = """I will stop being pessimistic about my academic and career future 🙏<|endoftext|>I will not relate to Xiu Xiu lyrics!<|endoftext|>I do not suffer from clinical depression ✨<|endoftext|>"""
+        prompt = context + user_input + "<|endoftext|>"
+    else:
+        # Generate from scratch
+        prompt = ""
     
     # Generate text
     generate_text(
         prompt=prompt,
         max_length=50,
-        temperature=0.8,
+        temperature=0.9,  # Higher temperature for more personality
         num_return_sequences=3  # Generate 3 different variations
     )

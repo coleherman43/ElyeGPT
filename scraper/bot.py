@@ -33,8 +33,10 @@ async def scrape_messages(ctx, user: discord.Member, limit: int = 1000):
         try:
             # Check if bot has permission to read this channel
             if not channel.permissions_for(ctx.guild.me).read_message_history:
+                print(f"⏭️  Skipping {channel.name} (no read permission)")
                 continue
             
+            print(f"🔍 Checking {channel.name}...")
             # Fetch message history
             async for message in channel.history(limit=limit):
                 if message.author.id == user.id:
@@ -85,5 +87,48 @@ async def test_scrape(ctx, limit: int = 50):
     
     await ctx.send(f"Found {len(messages)} messages. Check console for preview.")
     print(json.dumps(messages[:5], indent=2))  # Print first 5 to console
+
+@bot.command(name='generate')
+async def generate_message(ctx, num_messages: int = 1):
+    """
+    Generate messages in friend's style using the trained model
+    Usage: !generate [num_messages]
+    """
+    try:
+        import torch
+        from transformers import GPT2LMHeadModel, GPT2Tokenizer
+        
+        await ctx.send("🤖 Loading model...")
+        
+        # Load model
+        model_path = os.path.abspath('models/models/elye_gpt')
+        tokenizer = GPT2Tokenizer.from_pretrained(model_path, local_files_only=True)
+        model = GPT2LMHeadModel.from_pretrained(model_path, local_files_only=True)
+        
+        device = "cpu"  # Use CPU in bot to avoid issues
+        model = model.to(device)
+        model.eval()
+        
+        # Generate messages
+        for i in range(min(num_messages, 3)):  # Max 3 to avoid spam
+            with torch.no_grad():
+                input_ids = torch.tensor([[tokenizer.bos_token_id]]).to(device)
+                
+                output = model.generate(
+                    input_ids,
+                    max_length=50,
+                    temperature=0.9,
+                    top_p=0.9,
+                    do_sample=True,
+                    pad_token_id=tokenizer.eos_token_id,
+                    no_repeat_ngram_size=2,
+                )
+                
+                text = tokenizer.decode(output[0], skip_special_tokens=True)
+                await ctx.send(text)
+        
+    except Exception as e:
+        await ctx.send(f"❌ Error generating: {str(e)}")
+        print(f"Error: {e}")
 
 bot.run(BOT_TOKEN)

@@ -12,13 +12,13 @@ import os
 
 def train_model(
     train_file_path,
-    output_dir='models/friend_bot',
+    output_dir='models/elye_gpt',
     model_name='distilgpt2',  # 'distilgpt2' for smaller/faster
     block_size=128,
-    num_train_epochs=5,
-    per_device_train_batch_size=2,
-    save_steps=500,
-    learning_rate=5e-5
+    num_train_epochs=50,  # Very aggressive for small datasets
+    per_device_train_batch_size=1,  # Smaller batches = more frequent updates
+    save_steps=50,
+    learning_rate=2e-4  # Higher learning rate for faster adaptation
 ):
     """
     Fine-tune GPT-2 on friend's messages
@@ -145,5 +145,14 @@ if __name__ == '__main__':
         train_file = str(text_files[0])
         print(f"Using training file: {train_file}")
     
-    # Train the model
-    train_model()
+    # Train the model with aggressive settings for small datasets
+    train_model(
+        train_file_path=train_file,
+        output_dir='models/elye_gpt',
+        model_name='distilgpt2',
+        block_size=128,
+        num_train_epochs=15,  # More epochs for small data
+        per_device_train_batch_size=4,
+        save_steps=50,  # Save more frequently
+        learning_rate=1e-4  # Higher learning rate for faster adaptation
+    )

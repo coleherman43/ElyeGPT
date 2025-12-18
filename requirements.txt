@@ -1,2 +1,6 @@
 discord.py>=2.3.0
 python-dotenv>=1.0.0
+transformers>=4.35.0
+torch>=2.0.0
+datasets>=2.14.0
+accelerate>=0.24.0
